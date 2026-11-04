@@ -1,8 +1,26 @@
 {
   "name": "@bloomsynth/astro-seo-kit",
   "version": "0.1.0",
-  "description": "Shared SEO and AI-search plumbing for BloomSynth's Astro sites: head tags, JSON-LD, llms.txt, Markdown twins, robots.txt, link attribution and a pre-merge SEO check.",
+  "description": "SEO and AI-search plumbing for Astro content sites: frontmatter fields, head tags and JSON-LD, llms.txt, Markdown versions, robots.txt, link attribution and a pre-merge SEO check.",
   "license": "MIT",
+  "author": "BloomSynth (https://bloomsynth.com)",
+  "homepage": "https://github.com/bloomsynth/astro-seo-kit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bloomsynth/astro-seo-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bloomsynth/astro-seo-kit/issues"
+  },
+  "keywords": [
+    "astro",
+    "astro-integration",
+    "seo",
+    "json-ld",
+    "llms.txt",
+    "structured-data",
+    "ai-search"
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -30,7 +48,7 @@
     "node": ">=22.12.0"
   },
   "peerDependencies": {
-    "astro": ">=6"
+    "astro": ">=7"
   },
   "dependencies": {
     "node-html-parser": "^9.0.6"

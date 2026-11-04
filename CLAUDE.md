@@ -1,6 +1,6 @@
 # astro-seo-kit
 
-Shared SEO and AI-search plumbing for BloomSynth's Astro sites. Read README.md first.
+Public SEO and AI-search plumbing for Astro content sites, maintained by BloomSynth and used on its sites. Read README.md first; it is the user-facing documentation, so keep it accurate when behavior changes.
 
 - Plain JavaScript (ESM) with JSDoc and `src/index.d.ts`; no build step, because sites install it from GitHub and Node does not strip types inside `node_modules`.
 - `src/index.js` is the integration; `src/routes/*.js` are injected routes and read the site's options from the virtual module `virtual:astro-seo-kit/config`; keep them free of site-specific logic.
