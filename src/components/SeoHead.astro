@@ -1,0 +1,74 @@
+---
+/**
+ * Everything search engines and AI assistants read from <head>: title, description, canonical,
+ * Open Graph and Twitter tags, hreflang alternates, the Markdown twin and JSON-LD. The publisher
+ * Organization and the WebSite are added to every page's JSON-LD graph.
+ */
+import config from 'virtual:astro-seo-kit/config';
+import { absolute, graph } from '../jsonld.js';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Defaults to the current URL */
+  canonical?: string;
+  image?: string;
+  imageAlt?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  /** [{ lang: 'hi', href: '/blog/hi/x/' }, ...]; include the page itself and x-default where relevant */
+  alternates?: { lang: string; href: string }[];
+  /** Path or URL of this page's Markdown twin */
+  markdown?: string;
+  jsonLd?: (object | undefined)[];
+  publishedTime?: Date;
+  modifiedTime?: Date;
+}
+
+const {
+  title,
+  description,
+  canonical = new URL(Astro.url.pathname, config.site).toString(),
+  image,
+  imageAlt,
+  type = 'website',
+  noindex = false,
+  alternates = [],
+  markdown,
+  jsonLd = [],
+  publishedTime,
+  modifiedTime,
+} = Astro.props;
+
+const imageUrl = absolute(image, config.site);
+const structured = graph({
+  publisher: config.publisher,
+  siteName: config.name,
+  siteUrl: config.site,
+  nodes: jsonLd.filter(Boolean),
+});
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, follow" />}
+{alternates.map((alternate) => <link rel="alternate" hreflang={alternate.lang} href={absolute(alternate.href, config.site)} />)}
+{markdown && <link rel="alternate" type="text/markdown" href={absolute(markdown, config.site)} />}
+<link rel="sitemap" href="/sitemap-index.xml" />
+
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={config.name} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+{imageUrl && <meta property="og:image" content={imageUrl} />}
+{imageUrl && imageAlt && <meta property="og:image:alt" content={imageAlt} />}
+{publishedTime && <meta property="article:published_time" content={publishedTime.toISOString()} />}
+{modifiedTime && <meta property="article:modified_time" content={modifiedTime.toISOString()} />}
+<meta name="twitter:card" content={imageUrl ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+{imageUrl && <meta name="twitter:image" content={imageUrl} />}
+
+<script type="application/ld+json" set:html={JSON.stringify(structured)} />

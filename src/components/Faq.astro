@@ -1,0 +1,25 @@
+---
+/**
+ * Visible FAQ. Add `faqPage(faq)` from the kit's jsonld helpers to the page's SeoHead so the same
+ * questions are also structured data. Style `.seo-kit-faq` in the site.
+ */
+interface Props {
+  faq: { q: string; a: string }[];
+  heading?: string;
+}
+const { faq, heading = 'Frequently asked questions' } = Astro.props;
+---
+
+{
+  faq.length > 0 && (
+    <section class="seo-kit-faq">
+      <h2>{heading}</h2>
+      {faq.map(({ q, a }) => (
+        <details>
+          <summary>{q}</summary>
+          <p>{a}</p>
+        </details>
+      ))}
+    </section>
+  )
+}
