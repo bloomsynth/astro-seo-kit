@@ -21,7 +21,7 @@ It is not a theme: each site keeps its own design and only uses the parts below.
 ## Use it in a site
 
 ```sh
-npm install github:bloomsynth/astro-seo-kit#v0.1.0
+npm install github:bloomsynth/astro-seo-kit#v0.1.0   # or #<commit>
 ```
 
 ```js
