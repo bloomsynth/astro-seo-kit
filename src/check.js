@@ -205,6 +205,23 @@ export function markdownLinks(markdown) {
   return [...markdown.matchAll(MARKDOWN_LINK)].map((match) => match[1]);
 }
 
+/** Links in an llms.txt to this site that the build does not contain, e.g. a removed page */
+export function checkLlmsTxt(text, path, { site, outDir }) {
+  const targets = [...new Set(markdownLinks(text).map((href) => resolveTarget(href, path, site)).filter(Boolean))];
+  return targets
+    .filter((target) => !targetExists(outDir, target))
+    .map((target) => ({ path, level: 'error', rule: 'llms-link', message: `links to ${target}, which does not exist` }));
+}
+
+/** Every llms.txt in the build: the site's and those of its sections */
+async function llmsFiles(outDir) {
+  const entries = await readdir(outDir, { recursive: true, withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isFile() && entry.name === 'llms.txt')
+    .map((entry) => join(entry.parentPath ?? entry.path, entry.name))
+    .sort();
+}
+
 export async function runCheck({ site, outDir, collections, check, contentDir }) {
   const pages = [];
   for (const file of await htmlFiles(outDir)) {
@@ -214,6 +231,10 @@ export async function runCheck({ site, outDir, collections, check, contentDir })
     pages.push(page);
   }
   const issues = checkPages(pages, { site, outDir, collections, check });
+  for (const file of await llmsFiles(outDir)) {
+    const path = `/${file.slice(outDir.length).split(/[\\/]/).filter(Boolean).join('/')}`;
+    issues.push(...checkLlmsTxt(await readFile(file, 'utf8'), path, { site, outDir }));
+  }
   for (const { keyword, files } of duplicateKeywords(await primaryKeywords(contentDir))) {
     issues.push({ path: files.join(', '), level: 'error', rule: 'primary-keyword', message: `"${keyword}" is the primaryKeyword of more than one page` });
   }
