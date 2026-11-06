@@ -6,6 +6,7 @@
  */
 import config from 'virtual:astro-seo-kit/config';
 import { absolute, graph } from '../jsonld.js';
+import { resolvePage } from '../llm.js';
 
 interface Props {
   title: string;
@@ -18,7 +19,7 @@ interface Props {
   noindex?: boolean;
   /** [{ lang: 'hi', href: '/blog/hi/x/' }, ...]; include the page itself and x-default where relevant */
   alternates?: { lang: string; href: string }[];
-  /** Path or URL of this page's Markdown twin */
+  /** Path or URL of this page's Markdown twin. Pages listed in the `pages` option get theirs by default */
   markdown?: string;
   jsonLd?: (object | undefined)[];
   publishedTime?: Date;
@@ -40,6 +41,11 @@ const {
   modifiedTime,
 } = Astro.props;
 
+const samePath = (a: string, b: string) => (a.replace(/\/$/, '') || '/') === (b.replace(/\/$/, '') || '/');
+const markdownHref =
+  markdown ??
+  config.pages.map((page) => resolvePage(page, config.site)).find((page) => page.markdownPath && samePath(page.path, Astro.url.pathname))
+    ?.markdownPath;
 const imageUrl = absolute(image, config.site);
 const structured = graph({
   publisher: config.publisher,
@@ -54,7 +60,7 @@ const structured = graph({
 <link rel="canonical" href={canonical} />
 {noindex && <meta name="robots" content="noindex, follow" />}
 {alternates.map((alternate) => <link rel="alternate" hreflang={alternate.lang} href={absolute(alternate.href, config.site)} />)}
-{markdown && <link rel="alternate" type="text/markdown" href={absolute(markdown, config.site)} />}
+{markdownHref && <link rel="alternate" type="text/markdown" href={absolute(markdownHref, config.site)} />}
 <link rel="sitemap" href="/sitemap-index.xml" />
 
 <meta property="og:type" content={type} />

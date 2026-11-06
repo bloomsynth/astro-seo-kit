@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { checkPages, duplicateKeywords, markdownLinks, parsePage, primaryKeywords, runCheck } from '../src/check.js';
+import { checkLlmsTxt, checkPages, duplicateKeywords, markdownLinks, parsePage, primaryKeywords, runCheck } from '../src/check.js';
 
 const site = 'https://bloomsynth.com';
 const collections = [{ collection: 'guides', path: '/latte-books/guides/' }];
@@ -97,4 +97,23 @@ test('a baseline lets known errors pass and reports fixed ones', async () => {
   assert.deepEqual(result.newErrors.map((issue) => issue.path), ['/new/']);
   assert.deepEqual(result.knownErrors.map((issue) => issue.path), ['/old/']);
   assert.deepEqual(result.fixed, ['/gone/|h1']);
+});
+
+test('llms.txt may only link to files the build contains', async () => {
+  const outDir = await site_({ '/latte-books/': page() });
+  await writeFile(join(outDir, 'latte-books.md'), '# Latte Books\n');
+  const llms = [
+    '- [Latte Books](https://bloomsynth.com/latte-books.md): exists',
+    '- [Page](https://bloomsynth.com/latte-books/): exists',
+    '- [Removed](https://bloomsynth.com/old-page.md): gone',
+    '- [Other site](https://deva.bloomsynth.com/missing.md): not checked',
+  ].join('\n');
+  assert.deepEqual(checkLlmsTxt(llms, '/llms.txt', { site, outDir }), [
+    { path: '/llms.txt', level: 'error', rule: 'llms-link', message: 'links to /old-page.md, which does not exist' },
+  ]);
+
+  await mkdir(join(outDir, 'latte-books'), { recursive: true });
+  await writeFile(join(outDir, 'latte-books', 'llms.txt'), '- [Gone](/latte-books/gone.md)\n');
+  const { issues } = await runCheck({ site, outDir, collections, check: {}, contentDir: join(outDir, 'none') });
+  assert.deepEqual(rules(issues, '/latte-books/llms.txt'), ['error:llms-link']);
 });

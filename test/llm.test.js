@@ -1,12 +1,54 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildLlmsTxt, entryPath, markdownPath, pageToMarkdown } from '../src/llm.js';
+import { FULL_SEPARATOR, buildLlmsTxt, entryPath, insertIntoFull, markdownPath, pageToMarkdown, resolvePage } from '../src/llm.js';
 
 test('builds entry URLs and their Markdown twins', () => {
   assert.equal(entryPath('/latte-books/guides/', 'gst-invoice'), '/latte-books/guides/gst-invoice/');
   assert.equal(entryPath('/blog', 'hi/post'), '/blog/hi/post/');
   assert.equal(entryPath('/', 'post/index'), '/post/');
   assert.equal(markdownPath('/blog/hi/post/'), '/blog/hi/post.md');
+  assert.equal(markdownPath('/latte-books'), '/latte-books.md');
+  assert.equal(markdownPath('/about.html'), '/about.md');
+  assert.equal(markdownPath('/'), '/index.md');
+});
+
+test('resolves pages: this site gets Markdown versions, other sites and opt-outs do not', () => {
+  const site = 'https://bloomsynth.com';
+  const cases = [
+    [{ title: 'A', url: '/latte-books/' }, 'https://bloomsynth.com/latte-books/', '/latte-books.md'],
+    [{ title: 'B', url: 'https://bloomsynth.com/open-source/' }, 'https://bloomsynth.com/open-source/', '/open-source.md'],
+    [{ title: 'C', url: 'https://deva.bloomsynth.com/' }, 'https://deva.bloomsynth.com/', null],
+    [{ title: 'D', url: '/legal/', markdown: false }, 'https://bloomsynth.com/legal/', null],
+  ];
+  for (const [page, url, markdown] of cases) {
+    const resolved = resolvePage(page, site);
+    assert.equal(resolved.url, url, page.title);
+    assert.equal(resolved.markdownPath, markdown, page.title);
+    assert.equal(resolved.markdownUrl, markdown && `${site}${markdown}`, page.title);
+  }
+});
+
+test('inserts page Markdown after the llms-full.txt header', () => {
+  const head = '# Site\n\n> Summary\n';
+  const cases = [
+    ['no pages', head, [], head],
+    ['header only', head, ['# Page A\n'], `${head}${FULL_SEPARATOR}# Page A\n`],
+    ['before entries', `${head}${FULL_SEPARATOR}# Entry\n`, ['# Page A\n', '# Page B\n'], `${head}${FULL_SEPARATOR}# Page A\n${FULL_SEPARATOR}# Page B\n${FULL_SEPARATOR}# Entry\n`],
+    ['another header: appended', '# Custom\n\n', ['# Page A\n'], `# Custom\n${FULL_SEPARATOR}# Page A\n`],
+  ];
+  for (const [name, full, pages, expected] of cases) assert.equal(insertIntoFull(full, head, pages), expected, name);
+});
+
+test('builds llms.txt with several facts blocks', () => {
+  const text = buildLlmsTxt({
+    name: 'BloomSynth',
+    facts: [
+      { heading: 'About Latte Books', items: [['License', 'AGPL-3.0']] },
+      { heading: 'Empty', items: [] },
+      { heading: 'About Medusa Mobile', items: [['License', 'MIT']] },
+    ],
+  });
+  assert.equal(text, '# BloomSynth\n\n## About Latte Books\n\n- License: AGPL-3.0\n\n## About Medusa Mobile\n\n- License: MIT\n');
 });
 
 test('writes a Markdown twin with the quick answer and FAQ', () => {

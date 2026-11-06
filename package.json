@@ -1,6 +1,6 @@
 {
   "name": "@bloomsynth/astro-seo-kit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "SEO and AI-search plumbing for Astro content sites: frontmatter fields, head tags and JSON-LD, llms.txt, Markdown versions, robots.txt, link attribution and a pre-merge SEO check.",
   "license": "MIT",
   "author": "BloomSynth (https://bloomsynth.com)",
@@ -30,6 +30,7 @@
     "./schema": "./src/schema.js",
     "./jsonld": "./src/jsonld.js",
     "./llm": "./src/llm.js",
+    "./markdown": "./src/markdown.js",
     "./links": "./src/links.js",
     "./components/*": "./src/components/*",
     "./routes/*": "./src/routes/*"
